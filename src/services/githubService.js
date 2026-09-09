@@ -151,3 +151,79 @@ module.exports = {
     getHaprocardRepositories,
     getHaprocardRepository
 };
+
+
+
+
+
+
+
+
+
+
+
+const {
+    getCache,
+    setCache
+} = require("./cache");
+
+
+
+
+
+
+
+
+
+
+
+
+async function getHaprocardRepositories(username) {
+
+    const cacheKey = `haprocard:${username}`;
+
+    // Check cache
+    const cached = getCache(cacheKey);
+
+    if (cached) {
+        console.log("⚡ Cache HIT:", username);
+        return cached;
+    }
+
+    console.log("🌐 GitHub API:", username);
+
+    const repos =
+        await getUserRepositories(username);
+
+    const activeProjects = [];
+
+    for (const repo of repos) {
+
+        const markdown =
+            await getHaprocardFile(
+                username,
+                repo.name
+            );
+
+        if (markdown) {
+
+            activeProjects.push({
+                repo,
+                markdown
+            });
+        }
+    }
+
+    // Save result
+    setCache(
+        cacheKey,
+        activeProjects
+    );
+
+    console.log(
+        "💾 Cache SAVED:",
+        username
+    );
+
+    return activeProjects;
+}
