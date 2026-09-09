@@ -1,50 +1,83 @@
-function cleanValue(value) {
-    if (!value) return null;
+function cleanText(value) {
+    if (!value) return "";
 
-    // Markdown link:
-    // [text](url) → url
-    const markdownLink = value.match(/\[.*?\]\((.*?)\)/);
+    // Remove escaped markdown characters
+    value = value.replace(/\\([*_`])/g, "$1");
 
-    if (markdownLink) {
-        return markdownLink[1].trim();
+    // Convert markdown link [text](url) to URL
+    const linkMatch = value.match(/\[.*?\]\((.*?)\)/);
+
+    if (linkMatch) {
+        return linkMatch[1].trim();
     }
 
+    // Remove markdown bold characters
     return value
-        .replace(/\\\*/g, "")
-        .replace(/\*\*/g, "")
+        .replace(/\*/g, "")
         .trim();
 }
 
 
-function parseHaprocard(markdown) {
-    const data = {};
+// ------------------------------------
+// Get metadata field
+// ------------------------------------
 
-    // --------------------------------
-    // Basic metadata
-    // --------------------------------
+function getField(markdown, field) {
 
-    const fields = [
-        "ID",
-        "Category",
-        "Status",
-        "Author",
-        "Date"
-    ];
+    const lines = markdown.split("\n");
 
-    for (const field of fields) {
+    for (const line of lines) {
+
+        const cleanLine = line
+            .replace(/\\([*_`])/g, "$1")
+            .replace(/\*/g, "")
+            .trim();
 
         const regex = new RegExp(
-            `(?:\\*\\*)?\\\\?\\*\\*${field}:\\\\?\\*\\*(?:\\*\\*)?\\s*(.+)`,
+            `^${field}:\\s*(.+)$`,
             "i"
         );
 
-        const match = markdown.match(regex);
+        const match = cleanLine.match(regex);
 
         if (match) {
-            data[field.toLowerCase()] =
-                cleanValue(match[1]);
+            return cleanText(match[1]);
         }
     }
+
+    return null;
+}
+
+
+// ------------------------------------
+// Get section content
+// ------------------------------------
+
+function getSection(markdown, sectionName) {
+
+    const regex = new RegExp(
+        `##\\s*${sectionName}\\s*\\n([\\s\\S]*?)(?=\\n##\\s|$)`,
+        "i"
+    );
+
+    const match = markdown.match(regex);
+
+    if (!match) {
+        return null;
+    }
+
+    return match[1].trim();
+}
+
+
+// ------------------------------------
+// Parse Haprocard
+// ------------------------------------
+
+function parseHaprocard(markdown) {
+
+    // Normalize escaped markdown
+    markdown = markdown.replace(/\\([*_`])/g, "$1");
 
 
     // --------------------------------
@@ -55,136 +88,138 @@ function parseHaprocard(markdown) {
         /^#\s+(.+)$/m
     );
 
-    if (titleMatch) {
-        data.title = titleMatch[1].trim();
-    }
+    const title = titleMatch
+        ? cleanText(titleMatch[1])
+        : null;
+
+
+    // --------------------------------
+    // Basic fields
+    // --------------------------------
+
+    const id = getField(markdown, "ID");
+    const category = getField(markdown, "Category");
+    const status = getField(markdown, "Status");
+    const author = getField(markdown, "Author");
+    const date = getField(markdown, "Date");
 
 
     // --------------------------------
     // Description
     // --------------------------------
 
-    const descriptionMatch = markdown.match(
-        /##\s*Description\s*\n([\s\S]*?)(?=\n##\s|\n\*\*|$)/i
-    );
+    const descriptionSection =
+        getSection(markdown, "Description");
 
-    if (descriptionMatch) {
-        data.description =
-            descriptionMatch[1].trim();
-    } else {
-        data.description = null;
-    }
+    const description =
+        descriptionSection
+            ? descriptionSection.trim()
+            : null;
 
 
     // --------------------------------
     // Technologies
     // --------------------------------
 
-    const technologiesMatch = markdown.match(
-        /##\s*Technologies\s*\n([\s\S]*?)(?=\n##\s|\n\*\*|$)/i
-    );
+    const technologiesSection =
+        getSection(markdown, "Technologies");
 
-    if (technologiesMatch) {
-
-        data.technologies =
-            technologiesMatch[1]
-                .trim()
+    const technologies =
+        technologiesSection
+            ? technologiesSection
                 .split(",")
-                .map(item => item.trim())
-                .filter(Boolean);
-
-    } else {
-
-        data.technologies = [];
-
-    }
+                .map(item => cleanText(item))
+                .filter(Boolean)
+            : [];
 
 
     // --------------------------------
     // Image
     // --------------------------------
 
-    const imageMatch = markdown.match(
-        /##\s*Image\s*\n\s*(.+)/i
-    );
+    const imageSection =
+        getSection(markdown, "Image");
 
-    if (imageMatch) {
-        data.image =
-            cleanValue(imageMatch[1]);
-    } else {
-        data.image = null;
-    }
+    const image =
+        imageSection
+            ? cleanText(imageSection.split("\n")[0])
+            : null;
 
 
     // --------------------------------
     // Live
     // --------------------------------
 
-    const liveMatch = markdown.match(
-        /##\s*Live\s*\n\s*(.+)/i
-    );
+    const liveSection =
+        getSection(markdown, "Live");
 
-    if (liveMatch) {
-        data.live =
-            cleanValue(liveMatch[1]);
-    } else {
-        data.live = null;
-    }
+    const live =
+        liveSection
+            ? cleanText(liveSection.split("\n")[0])
+            : null;
 
 
     // --------------------------------
     // GitHub
     // --------------------------------
 
-    const githubMatch = markdown.match(
-        /##\s*GitHub\s*\n\s*(.+)/i
-    );
+    const githubSection =
+        getSection(markdown, "GitHub");
 
-    if (githubMatch) {
-        data.github =
-            cleanValue(githubMatch[1]);
-    } else {
-        data.github = null;
-    }
+    const github =
+        githubSection
+            ? cleanText(githubSection.split("\n")[0])
+            : null;
 
 
     // --------------------------------
     // Tags
     // --------------------------------
 
-    const tagsMatch = markdown.match(
-        /##\s*Tags\s*\n\s*(.+)/i
-    );
+    const tagsSection =
+        getSection(markdown, "Tags");
 
-    if (tagsMatch) {
-
-        data.tags =
-            tagsMatch[1]
+    const tags =
+        tagsSection
+            ? tagsSection
                 .split(",")
-                .map(item => item.trim())
-                .filter(Boolean);
-
-    } else {
-
-        data.tags = [];
-
-    }
+                .map(item => cleanText(item))
+                .filter(Boolean)
+            : [];
 
 
     // --------------------------------
     // Featured
     // --------------------------------
 
-    const featuredMatch = markdown.match(
-        /(?:\*\*)?\\\\?\*{2}Featured:\\\\?\*{2}(?:\*\*)?\s*(true|false)/i
-    );
+    const featuredValue =
+        getField(markdown, "Featured");
 
-    data.featured = featuredMatch
-        ? featuredMatch[1].toLowerCase() === "true"
-        : false;
+    const featured =
+        featuredValue
+            ? featuredValue.toLowerCase() === "true"
+            : false;
 
 
-    return data;
+    // --------------------------------
+    // Final object
+    // --------------------------------
+
+    return {
+        id,
+        title,
+        category,
+        status,
+        author,
+        date,
+        description,
+        technologies,
+        image,
+        live,
+        github,
+        tags,
+        featured
+    };
 }
 
 

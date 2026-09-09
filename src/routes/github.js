@@ -1,7 +1,12 @@
 const express = require("express");
+
 const {
     getHaprocardRepositories
 } = require("../services/githubService");
+
+const {
+    parseHaprocard
+} = require("../utils/haprocardParser");
 
 const router = express.Router();
 
@@ -9,18 +14,40 @@ router.get("/:username", async (req, res) => {
     const { username } = req.params;
 
     try {
-        const repos = await getHaprocardRepositories(username);
+        const repositories =
+            await getHaprocardRepositories(username);
 
-        const projects = repos.map((repo) => ({
-            name: repo.name,
-            description: repo.description,
-            url: repo.html_url,
-            homepage: repo.homepage,
-            language: repo.language,
-            stars: repo.stargazers_count,
-            forks: repo.forks_count,
-            updated: repo.updated_at
-        }));
+        const projects = repositories.map(
+            ({ repo, markdown }) => {
+
+                console.log("========== HAPROCARD ==========");
+                console.log("Repository:", repo.name);
+                console.log("Markdown:");
+                console.log(markdown);
+
+                const card =
+                    parseHaprocard(markdown);
+
+                console.log("Parsed Card:");
+                console.log(card);
+
+                return {
+                    ...card,
+
+                    github: card.github || repo.html_url,
+
+                    live: card.live || repo.homepage || null,
+
+                    repository: {
+                        name: repo.name,
+                        language: repo.language,
+                        stars: repo.stargazers_count,
+                        forks: repo.forks_count,
+                        updated: repo.updated_at
+                    }
+                };
+            }
+        );
 
         res.json({
             success: true,
