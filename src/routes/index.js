@@ -1,4 +1,5 @@
 const express = require("express");
+const githubRoutes = require("./github");
 
 const router = express.Router();
 
@@ -10,5 +11,7 @@ router.get("/", (req, res) => {
         message: "GitHub to Website Project Showcase API"
     });
 });
+
+router.use("/github", githubRoutes);
 
 module.exports = router;
