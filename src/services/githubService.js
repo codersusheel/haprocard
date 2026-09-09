@@ -1,10 +1,12 @@
-
 console.log(
     "GitHub Token Loaded:",
     process.env.GITHUB_TOKEN ? "YES" : "NO"
 );
 
 
+// ------------------------------------
+// GitHub API Fetch
+// ------------------------------------
 
 async function githubFetch(url) {
     const response = await fetch(url, {
@@ -27,6 +29,10 @@ async function githubFetch(url) {
 }
 
 
+// ------------------------------------
+// Get user repositories
+// ------------------------------------
+
 async function getUserRepositories(username) {
     const url =
         `https://api.github.com/users/${username}/repos?per_page=100&sort=updated`;
@@ -35,18 +41,34 @@ async function getUserRepositories(username) {
 }
 
 
-async function hasHaprocard(username, repo) {
+// ------------------------------------
+// Get haprocard.md
+// ------------------------------------
+
+async function getHaprocardFile(username, repo) {
     const url =
         `https://api.github.com/repos/${username}/${repo}/contents/haprocard.md`;
 
     try {
-        await githubFetch(url);
-        return true;
+        const data = await githubFetch(url);
+
+        if (!data.content) {
+            return null;
+        }
+
+        return Buffer
+            .from(data.content, "base64")
+            .toString("utf8");
+
     } catch {
-        return false;
+        return null;
     }
 }
 
+
+// ------------------------------------
+// Get active Haprocard projects
+// ------------------------------------
 
 async function getHaprocardRepositories(username) {
     const repos = await getUserRepositories(username);
@@ -54,13 +76,17 @@ async function getHaprocardRepositories(username) {
     const activeProjects = [];
 
     for (const repo of repos) {
-        const exists = await hasHaprocard(
+
+        const markdown = await getHaprocardFile(
             username,
             repo.name
         );
 
-        if (exists) {
-            activeProjects.push(repo);
+        if (markdown) {
+            activeProjects.push({
+                repo,
+                markdown
+            });
         }
     }
 

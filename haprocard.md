@@ -18,7 +18,7 @@ Node.js, Express.js, JavaScript, GitHub API, REST API, Markdown
 
 ## Image
 
-https://api.haproven.com/assets/haprocard.webp
+https://haproven.netlify.app/assets/img/haproven-logo.png
 
 ## Live
 
@@ -33,5 +33,3 @@ https://github.com/haproven/haprocard
 Haproven, Haprocard, GitHub API, REST API, Developer Tool, Project Showcase, Automation
 
 **Featured:** true
-
-
