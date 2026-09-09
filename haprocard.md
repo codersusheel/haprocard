@@ -18,7 +18,7 @@ Node.js, Express.js, JavaScript, GitHub API, REST API, Markdown
 
 ## Image
 
-https://haproven.netlify.app/assets/img/haproven-logo.png
+https://github.com/deepakyadav1425/amazon-clone-project/blob/main/img/main/image.png
 
 ## Live
 
