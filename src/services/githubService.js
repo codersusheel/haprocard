@@ -97,3 +97,57 @@ async function getHaprocardRepositories(username) {
 module.exports = {
     getHaprocardRepositories
 };
+
+
+
+
+
+
+
+
+
+
+
+
+// ------------------------------------
+// Get single Haprocard project
+// ------------------------------------
+
+async function getHaprocardRepository(username, repo) {
+
+    const markdown = await getHaprocardFile(
+        username,
+        repo
+    );
+
+    if (!markdown) {
+        return null;
+    }
+
+    const repositories =
+        await getUserRepositories(username);
+
+    const repository =
+        repositories.find(
+            item => item.name.toLowerCase() === repo.toLowerCase()
+        );
+
+    if (!repository) {
+        return null;
+    }
+
+    return {
+        repo: repository,
+        markdown
+    };
+}
+
+
+// ------------------------------------
+// Export
+// ------------------------------------
+
+module.exports = {
+    getHaprocardRepositories,
+    getHaprocardRepository
+};
