@@ -1,0 +1,22 @@
+{
+  "name": "haprocard",
+  "version": "1.0.0",
+  "description": "GitHub to Website Automatic Project Showcase API",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js"
+  },
+  "keywords": [
+    "haprocard",
+    "github",
+    "api",
+    "projects",
+    "haproven"
+  ],
+  "author": "Haproven",
+  "license": "MIT",
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
